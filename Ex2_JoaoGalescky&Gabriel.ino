@@ -7,8 +7,8 @@
 #define TEMPO_BOTAO_ATIVADO 500
 #define BOTAO 7
 
-int estadoAtual = LOW;
-int botaoEstado = 0;
+int estadoLed = LOW;
+int botaoEstado;
 unsigned long tempoAnterior = 0;
 unsigned long intervalo = TEMPO_BOTAO_DESATIVADO;
 
@@ -16,9 +16,8 @@ void setup() {
   // to run once
   Serial.begin(9600);
   pinMode(PIN_LED, OUTPUT);
-  pinMode(BOTAO, INPUT_PULLUP)
-  digitalWrite(PIN_LED, LOW);
-  int estadoAtual = LOW;
+  pinMode(BOTAO, INPUT_PULLUP);
+  digitalWrite(PIN_LED, estadoLed);
 }
 
 void loop() {
@@ -26,20 +25,24 @@ void loop() {
   botaoEstado = digitalRead(BOTAO);
   unsigned long tempoAtual = millis(); // milisegundos
   
+  if (botaoEstado == LOW) { // pullup
+    intervalo = TEMPO_BOTAO_ATIVADO;
+  } else {
+    intervalo = TEMPO_BOTAO_DESATIVADO;
+  }
+
   if (tempoAtual - tempoAnterior >= intervalo) {
     tempoAnterior = tempoAtual;
 
+    // operario ternário
+    estadoLed = (estadoLed == LOW) ? HIGH : LOW; // se sim, HIGH, se não LOW
+    digitalWrite(PIN_LED, estadoLed)
+
+    // estado
     if (botaoEstado == LOW) {
-      if (TEMPO_BOTAO_ATIVADO) {
-        Serial.println("Botao Desativado");
-        digitalWrite(PIN_LED, HIGH)
-      }
+      Serial.println("Botao pressionado - 500ms")
     } else {
-      if (TEMPO_BOTAO_DESATIVADO) {
-          Serial.println("Botao Ativado");
-          digitalWrite(PIN_LED, LOW) 
-      }
+      Serial.println("Botao solto - 1000ms")
     }
-    digitalWrite(PIN_LED, estadoAtual);
   }
 }
