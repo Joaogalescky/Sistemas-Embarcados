@@ -8,6 +8,13 @@ c) Desenvolva um algoritmo que através de dois potenciômetros controle os valo
 Hue e Value, considere o valor de Saturation 1.
 */
 
+#define PIN_LED_R 11
+#define PIN_LED_G 10
+#define PIN_LED_B 9
+
+double JoyStick_X = A0
+double JoyStick_Y = A1
+
 void setup() {
 
 }
