@@ -74,7 +74,7 @@ void loop() {
 
   // converte para intervalo de 360°
   double h = map(hueBruto, 0, 1023, 0, 360) / 360.0;
-  double s = map(satBruto, 0, 1023, 0, 360) / 369.0;
+  double s = map(satBruto, 0, 1023, 0, 360) / 360.0;
   double v = 1.0;  // brilho
 
   hsvToRgb(h, s, v, rgb);
