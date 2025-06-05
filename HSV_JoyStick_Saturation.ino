@@ -68,5 +68,30 @@ void setup() {
 }
 
 void loop() {
+  int hueBruto = analogRead(JoyStick_X);  // 0 a 1023
+  // int satBruto = analogRead(JoyStick_Y);
+  int valueBruto = analogRead(JoyStick_Y); 
 
+  // converte para intervalo de 360°
+  double h = map(hueBruto, 0, 1023, 0, 360) / 360.0;
+  // double s = map(satBruto, 0, 1023, 0, 360) / 360.0;
+  double s = 1.0; // saturação
+  double v = map(valueBruto, 0, 1023, 0, 100) / 100.0; // brilho
+
+  hsvToRgb(h, s, v, rgb);
+  Serial.print("Hue: ");
+  Serial.println(h * 360);
+  Serial.print("Value: ")
+  Serial.println(v * 100);
+  Serial.print("R: ");
+  Serial.println(rgb[0]);
+  Serial.print("G: ");
+  Serial.println(rgb[1]);
+  Serial.print("B: ");
+  Serial.println(rgb[2]);
+
+  analogWrite(PIN_LED_R, rgb[0]);
+  analogWrite(PIN_LED_G, rgb[1]);
+  analogWrite(PIN_LED_B, rgb[2]);
+  delay(100);
 }
