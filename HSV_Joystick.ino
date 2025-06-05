@@ -11,11 +11,13 @@ Hue e Saturation, considere o valor de Value 1.
 #define PIN_LED_R 11
 #define PIN_LED_G 10
 #define PIN_LED_B 9
-byte rgb[3];
-double JoyStick_X = 6
-double JoyStick_Y = 5
 
-/**
+byte rgb[3];
+
+double JoyStick_X = A0 
+double JoyStick_Y = A1
+
+  /**
 * Converts an HSV color value to
 * RGB.
 * Assumes h, s, and v are
@@ -53,6 +55,10 @@ void setup() {
   // put your setup code here, to run once:
   Serial.println("Iniciado...");
   Serial.begin(9600);
+  //Joystick
+  pinMode(JoyStick_X, INPUT);
+  pinMode(JoyStick_Y, INPUT);
+  //Leds
   pinMode(PIN_LED_R, OUTPUT);
   pinMode(PIN_LED_G, OUTPUT);
   pinMode(PIN_LED_B, OUTPUT);
@@ -77,5 +83,4 @@ void loop() {
     analogWrite(PIN_LED_G, rgb[1]);
     analogWrite(PIN_LED_B, rgb[2]);
     delay(100);
-  };
 };
