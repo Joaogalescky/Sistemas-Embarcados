@@ -53,7 +53,18 @@ double JoyStick_Y = A1
 }
 
 void setup() {
-
+  Serial.println("Iniciado...");
+  Serial.begin(9600);
+  //Joystick
+  pinMode(JoyStick_X, INPUT);
+  pinMode(JoyStick_Y, INPUT);
+  //Leds
+  pinMode(PIN_LED_R, OUTPUT);
+  pinMode(PIN_LED_G, OUTPUT);
+  pinMode(PIN_LED_B, OUTPUT);
+  digitalWrite(PIN_LED_R, LOW);
+  digitalWrite(PIN_LED_G, LOW);
+  digitalWrite(PIN_LED_B, LOW);
 }
 
 void loop() {
