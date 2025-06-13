@@ -269,3 +269,14 @@ double diferencaQuadratica(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2)
   double difB = b1 - b2;
   return sqrt(difR * difR + difG * difG + difB * difB);
 }
+
+void leituraMediaLdr() {
+  const int leituras = 10;
+  long soma = 0;
+
+  for (int i = 0; i < leituras; i++) {
+    soma += analogRead(PIN_LDR);
+    delay(10);
+  }
+  return soma / leituras;
+}
