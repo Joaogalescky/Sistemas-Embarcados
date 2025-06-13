@@ -241,6 +241,17 @@ void demonstrarHsv() {
 
 void setup() {
     // put your setup code here, to run once:
+    Serial.println("Iniciando...")
+    Serial.println("HSV-RGB Detector de Cores");
+    Serial.begin(9600);
+    pinMode(PIN_LED_R, OUTPUT);
+    pinMode(PIN_LED_G, OUTPUT);
+    pinMode(PIN_LED_B, OUTPUT);
+    pinMode(PIN_BUTTON, INPUT_PULLUP);
+    digitalWrite(PIN_LED_R, LOW);
+    digitalWrite(PIN_LED_G, LOW);
+    digitalWrite(PIN_LED_B, LOW);
+    demonstrarHsv();
 };
 
 void loop() {
