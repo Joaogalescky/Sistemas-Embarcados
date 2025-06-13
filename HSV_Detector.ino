@@ -158,6 +158,23 @@ void rgbEstimadoDeLdr(int valorLdr, byte rgbEstimado[3]) {
   rgbEstimado[2] = intensidade * 255;
 }
 
+void reproduzirCorHsv(CoresReferencia cor) {
+  hsvToRgb(cor.hue / 360.0, cor.saturation, cor.value, rgb);
+
+  analogWrite(PIN_LED_R, rgb[0]);
+  analogWrite(PIN_LED_G, rgb[1]);
+  analogWrite(PIN_LED_B, rgb[2]);
+
+  Serial.print("Cor reproduzida via HSV: ");
+  Serial.print("H=" + String(cor.hue) + "°,");
+  Serial.print("S=" + String(cor.saturation) + ", ");
+  Serial.println("V=" + String(cor.value));
+  Serial.print("RGB resultante: ");
+  Serial.print("R=" + String(rgb[0]) + ", ");
+  Serial.print("G=" + String(rgb[1]) + ", ");
+  Serial.println("B=" + String(rgb[2]));
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
