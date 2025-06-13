@@ -139,6 +139,25 @@ int encontrarMelhorCor(byte rgbEstimado[3]) {
   return melhorIndex;
 }
 
+void rgbEstimadoDeLdr(int valorLdr, byte rgbEstimado[3]) {
+  //busca na tabela de mapeamento LDR
+  for (int i = 0; i < 7; i++) {
+    if (valorLdr >= ldrMapeando[i].minValue && valorLdr <= ldrMapeando[i].maxValue) {
+      rgbEstimado[0] = ldrMapeando[i].redEstimado;
+      rgbEstimado[1] = ldrMapeando[i].greenEstimado;
+      rgbEstimado[2] = ldrMapeando[i].blueEstimado;
+      return;
+    }
+  }
+
+  //interpolação linear baseada no valor LDR
+  //contigência para caso não encontre na tabela
+  float intensidade = (float)valorLdr / 1023.0;
+  rgbEstimado[0] = intensidade * 255;
+  rgbEstimado[1] = intensidade * 255;
+  rgbEstimado[2] = intensidade * 255;
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
