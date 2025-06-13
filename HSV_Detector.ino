@@ -261,3 +261,11 @@ void loop() {
   }
   delay(50);
 };
+
+//distancia euclidiana (medir entre dois pontos em um espaço)
+double diferencaQuadratica(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2) {
+  double difR = r1 - r2;
+  double difG = g1 - g2;
+  double difB = b1 - b2;
+  return sqrt(difR * difR + difG * difG + difB * difB);
+}
