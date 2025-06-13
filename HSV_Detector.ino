@@ -190,6 +190,32 @@ void coresResultantes(CoresReferencia cor, double diferenca) {
   Serial.print("Diferenca quadratica: " + String(diferenca, 2));
 }
 
+void modoCalibrar() {
+  Serial.println("Calibracao");
+  Serial.println("Posicione cada cor sobre o LDR e anote os valores:");
+
+  int i = 0;
+  while (i < 50) {
+    int valorLdr = analogRead(PIN_LDR);
+    byte rgbEstimado[3];
+    rgbEstimadoLdr(valorLdr, rgbEstimado);
+
+    Serial.print("LDR: " + String(valorLdr) + " -> RGB_est(");
+    Serial.print(String(rgbEstimado[0]) + ", ");
+    Serial.print(String(rgbEstimado[1]) + ", ");
+    Serial.println(String(rgbEstimado[2]) + ")");
+
+    delay(500);
+    i++;
+
+    if (digitalRead(PIN_BUTTON) == LOW) {
+      delay(500);
+      break;
+    }
+  }
+  Serial.println("Calibracao finalizada!");
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
