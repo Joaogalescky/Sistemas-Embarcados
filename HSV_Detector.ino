@@ -26,6 +26,16 @@ struct CoresReferencia {
   double value;
 };
 
+CoresReferencia referenciandoCores[7] = {
+  { "BRANCO", { 255, 255, 255 }, 0, 0, 1 },
+  { "AMARELO", { 255, 255, 0 }, 60, 1, 1 },
+  { "VERDE", { 0, 255, 0 }, 120, 1, 1 },
+  { "AZUL", { 0, 0, 255 }, 240, 1, 1 },
+  { "VERMELHO", { 255, 0, 0 }, 0, 1, 1 },
+  { "CINZA", { 128, 128, 128 }, 0, 0, 0.5 },
+  { "PRETO", { 0, 0, 0 }, 0, 0, 0 }
+};
+
 /**
 * Converts an HSV cor value to RGB.
 * Assumes h, s, and v are contained in the set [0, 1] and
