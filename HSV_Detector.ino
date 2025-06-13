@@ -44,6 +44,17 @@ struct mapaLdr {
   byte blueEstimado;
 };
 
+//faixa de valores ldr para cada cor
+mapaLdr ldrMapeando[7] = {
+  { 800, 1023, 255, 255, 255 },  // BRANCO
+  { 600, 799, 255, 255, 100 },   // AMARELO
+  { 400, 599, 100, 255, 100 },   // VERDE
+  { 300, 499, 100, 100, 255 },   // AZUL
+  { 200, 399, 255, 100, 100 },   // VERMELHO
+  { 100, 299, 150, 150, 150 },   // CINZA
+  { 0, 199, 50, 50, 50 }         // PRETO
+};
+
 /**
 * Converts an HSV cor value to RGB.
 * Assumes h, s, and v are contained in the set [0, 1] and
