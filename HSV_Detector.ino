@@ -116,6 +116,29 @@ void identificarCor() {
   Serial.println("Fim identificacao!");
 }
 
+//encontrar melhor correspondencia
+int encontrarMelhorCor(byte rgbEstimado[3]) {
+  double minDiferenca = 999999;  //artificial - para busca do menor valor
+  int melhorIndex = 0;
+
+  Serial.println("\nComparando com cores de referencia:");
+
+  for (int i = 0; i < 7; i++) {
+    double diferenca = diferencaQuadratica(
+      rgbEstimado[0], rgbEstimado[1], rgbEstimado[2],
+      referenciandoCores[i].rgb[0], referenciandoCores[i].rgb[1], referenciandoCores[i].rgb[2]);
+
+    Serial.print(referenciandoCores[i].nome);
+    Serial.println(" - Diferenca: " + String(diferenca, 2));
+
+    if (diferenca < minDiferenca) {
+      minDiferenca = diferenca;
+      melhorIndex = i;
+    }
+  }
+  return melhorIndex;
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
