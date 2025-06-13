@@ -18,6 +18,14 @@ const int PIN_BUTTON = 2;
 //variavel
 byte rgb[3];
 
+struct CoresReferencia {
+  String nome;
+  byte rgb[3];  //0 = red; 1 = green; 2 = blue
+  double hue;   // 0-360
+  double saturation;
+  double value;
+};
+
 /**
 * Converts an HSV cor value to RGB.
 * Assumes h, s, and v are contained in the set [0, 1] and
