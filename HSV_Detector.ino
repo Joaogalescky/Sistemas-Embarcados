@@ -175,6 +175,21 @@ void reproduzirCorHsv(CoresReferencia cor) {
   Serial.println("B=" + String(rgb[2]));
 }
 
+//exibir resultados
+void coresResultantes(CoresReferencia cor, double diferenca) {
+  Serial.println("\nResultado da Identificacao:");
+  Serial.println("Cor identificada: " + String(cor.nome));
+  Serial.print("RGB de referencia: ");
+  Serial.print("R=" + String(cor.rgb[0]) + ", ");
+  Serial.print("G=" + String(cor.rgb[1]) + ", ");
+  Serial.println("B=" + String(cor.rgb[2]));
+  Serial.print("HSV de referencia: ");
+  Serial.print("H=" + String(cor.hue) + "°, ");
+  Serial.print("S=" + String(cor.saturation) + ", ");
+  Serial.println("V=" + String(cor.value));
+  Serial.print("Diferenca quadratica: " + String(diferenca, 2));
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
