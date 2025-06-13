@@ -280,3 +280,11 @@ void leituraMediaLdr() {
   }
   return soma / leituras;
 }
+
+bool checarBotaoPressionado() {
+  if (digitalRead(PIN_BUTTON) == LOW) {
+    delay(200);
+    return true;
+  }
+  return false;
+}
