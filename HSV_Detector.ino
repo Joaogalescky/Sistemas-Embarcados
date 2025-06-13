@@ -216,6 +216,29 @@ void modoCalibrar() {
   Serial.println("Calibracao finalizada!");
 }
 
+void demonstrarHsv() {
+  Serial.println("\nDemonstracao modelo HSV");
+  Serial.println("Percorrendo 360° de Hue com S=1 e V=1");
+
+  for (double h = 0; h < 360; h += 30) {
+    hsvToRgb(h / 360.0, 1.0, 1.0, rgb);
+
+    Serial.print("H=" + String(h) + "° -> ");
+    Serial.print("RGB(" + String(rgb[0]) + ", ");
+    Serial.print(String(rgb[1]) + ", ");
+    Serial.println(String(rgb[2]) + ")");
+
+    analogWrite(PIN_LED_R, rgb[0]);
+    analogWrite(PIN_LED_G, rgb[1]);
+    analogWrite(PIN_LED_B, rgb[2]);
+    delay(200);
+  }
+  analogWrite(PIN_LED_R, 0);
+  analogWrite(PIN_LED_G, 0);
+  analogWrite(PIN_LED_B, 0);
+  Serial.println("Demonstracao concluida! Pronto para identificacao");
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
