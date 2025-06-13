@@ -36,6 +36,14 @@ CoresReferencia referenciandoCores[7] = {
   { "PRETO", { 0, 0, 0 }, 0, 0, 0 }
 };
 
+struct mapaLdr {
+  int minValue;
+  int maxValue;
+  byte redEstimado;
+  byte greenEstimado;
+  byte blueEstimado;
+};
+
 /**
 * Converts an HSV cor value to RGB.
 * Assumes h, s, and v are contained in the set [0, 1] and
