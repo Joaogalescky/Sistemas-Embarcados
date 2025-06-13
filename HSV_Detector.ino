@@ -86,6 +86,36 @@ void hsvToRgb(double h, double s, double v, byte rgb[]) {
   rgb[2] = b * 255;
 }
 
+void identificarCor() {
+  Serial.println("Identificando Cor");
+
+  int valorLdr = leituraMediaLdr();
+  byte rgbEstimado[3];
+  rgbEstimadoDeLdr(valorLdr, rgbEstimado);
+
+  Serial.println("Valor LDR: " + String(valorLdr));
+  Serial.print("RGB estimado do LDR: ");
+  Serial.print("R=" + String(rgbEstimado[0]) + ", ");
+  Serial.print("G=" + String(rgbEstimado[1]) + ", ");
+  Serial.print("B=" + String(rgbEstimado[2]));
+
+  //encontrar cor com menor diferenca
+  int melhorIndex = encontrarMelhorCor(rgbEstimado);
+  CoresReferencia melhorCaso = referenciandoCores[melhorIndex];
+
+  //calc diferença quadrática
+  double diferencaFinal = diferencaQuadratica(
+    rgbEstimado[0], rgbEstimado[1].rgbEstimado[2],
+    melhorCaso.rgb[0], melhorCaso.rgb[1], melhorCaso.rgb[2]);
+
+  coresResultantes(melhorCaso, diferencaFinal);
+
+  //reproduzir a cor usando HSV para RGB
+  reproduzirCorHsv(melhorCaso);
+
+  Serial.println("Fim identificacao!");
+}
+
 void setup() {
     // put your setup code here, to run once:
 };
