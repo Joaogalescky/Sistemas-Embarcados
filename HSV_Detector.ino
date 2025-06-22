@@ -15,18 +15,13 @@ const int PIN_LED_B = 9;
 const int PIN_LDR = A0;
 const int PIN_BUTTON = 2;
 
-// variavel
-byte rgb[3];
-
-struct CoresReferencia {
+struct Cor {
   String nome;
-  byte rgb[3];  // 0 = red; 1 = green; 2 = blue
-  double hue;   // 0-360
-  double saturation;
-  double value;
+  byte rgb[3];                   // 0 = red; 1 = green; 2 = blue
+  float hue, saturation, value;  // 0-360
 };
 
-CoresReferencia referenciandoCores[7] = {
+Cor cores[7] = {
   { "BRANCO", { 255, 255, 255 }, 0, 0, 1 },
   { "AMARELO", { 255, 255, 0 }, 60, 1, 1 },
   { "VERDE", { 0, 255, 0 }, 120, 1, 1 },
@@ -36,24 +31,18 @@ CoresReferencia referenciandoCores[7] = {
   { "PRETO", { 0, 0, 0 }, 0, 0, 0 }
 };
 
-struct mapaLdr {
-  int minValue;
-  int maxValue;
-  byte redEstimado;
-  byte greenEstimado;
-  byte blueEstimado;
+// Mapeamento LDR -> RGB estimado
+int ldrRanges[7][2] = {
+  { 800, 1023 },  // Branco
+  { 300, 499 },   // Azul
+  { 400, 599 },   // Verde
+  { 600, 799 },   // Amarelo
+  { 200, 399 },   // Vermelho
+  { 100, 299 },   // Cinza
+  { 0, 199 }      // Preto
 };
 
-// faixa de valores ldr para cada cor
-mapaLdr ldrMapeando[7] = {
-  { 800, 1023, 255, 255, 255 },  // BRANCO
-  { 600, 799, 255, 255, 100 },   // AMARELO
-  { 400, 599, 100, 255, 100 },   // VERDE
-  { 300, 499, 100, 100, 255 },   // AZUL
-  { 200, 399, 255, 100, 100 },   // VERMELHO
-  { 100, 299, 150, 150, 150 },   // CINZA
-  { 0, 199, 50, 50, 50 }         // PRETO
-};
+bool calibrado = false;
 
 /**
  * Converts an HSV cor value to RGB.
@@ -98,164 +87,10 @@ void hsvToRgb(double h, double s, double v, byte rgb[]) {
   rgb[2] = b * 255;
 }
 
-void identificarCor() {
-  Serial.println("Identificando Cor");
-
-  int valorLdr = leituraMediaLdr();
-  byte rgbEstimado[3];
-  rgbEstimadoDeLdr(valorLdr, rgbEstimado);
-
-  Serial.println("Valor LDR: " + String(valorLdr));
-  Serial.print("RGB estimado do LDR: ");
-  Serial.print("R=" + String(rgbEstimado[0]) + ", ");
-  Serial.print("G=" + String(rgbEstimado[1]) + ", ");
-  Serial.print("B=" + String(rgbEstimado[2]));
-
-  // encontrar cor com menor diferenca
-  int melhorIndex = encontrarMelhorCor(rgbEstimado);
-  CoresReferencia melhorCaso = referenciandoCores[melhorIndex];
-
-  // calc diferença quadrática
-  double diferencaFinal = diferencaQuadratica(
-    rgbEstimado[0], rgbEstimado[1].rgbEstimado[2],
-    melhorCaso.rgb[0], melhorCaso.rgb[1], melhorCaso.rgb[2]);
-
-  coresResultantes(melhorCaso, diferencaFinal);
-
-  // reproduzir a cor usando HSV para RGB
-  reproduzirCorHsv(melhorCaso);
-
-  Serial.println("Fim identificacao!");
-}
-
-// encontrar melhor correspondencia
-int encontrarMelhorCor(byte rgbEstimado[3]) {
-  double minDiferenca = 999999;  // artificial - para busca do menor valor
-  int melhorIndex = 0;
-
-  Serial.println("\nComparando com cores de referencia:");
-
-  for (int i = 0; i < 7; i++) {
-    double diferenca = diferencaQuadratica(
-      rgbEstimado[0], rgbEstimado[1], rgbEstimado[2],
-      referenciandoCores[i].rgb[0], referenciandoCores[i].rgb[1], referenciandoCores[i].rgb[2]);
-
-    Serial.print(referenciandoCores[i].nome);
-    Serial.println(" - Diferenca: " + String(diferenca, 2));
-
-    if (diferenca < minDiferenca) {
-      minDiferenca = diferenca;
-      melhorIndex = i;
-    }
-  }
-  return melhorIndex;
-}
-
-void rgbEstimadoDeLdr(int valorLdr, byte rgbEstimado[3]) {
-  // busca na tabela de mapeamento LDR
-  for (int i = 0; i < 7; i++) {
-    if (valorLdr >= ldrMapeando[i].minValue && valorLdr <= ldrMapeando[i].maxValue) {
-      rgbEstimado[0] = ldrMapeando[i].redEstimado;
-      rgbEstimado[1] = ldrMapeando[i].greenEstimado;
-      rgbEstimado[2] = ldrMapeando[i].blueEstimado;
-      return;
-    }
-  }
-
-  // interpolação linear baseada no valor LDR
-  // contigência para caso não encontre na tabela
-  float intensidade = (float)valorLdr / 1023.0;
-  rgbEstimado[0] = intensidade * 255;
-  rgbEstimado[1] = intensidade * 255;
-  rgbEstimado[2] = intensidade * 255;
-}
-
-void reproduzirCorHsv(CoresReferencia cor) {
-  hsvToRgb(cor.hue / 360.0, cor.saturation, cor.value, rgb);
-
-  analogWrite(PIN_LED_R, rgb[0]);
-  analogWrite(PIN_LED_G, rgb[1]);
-  analogWrite(PIN_LED_B, rgb[2]);
-
-  Serial.print("Cor reproduzida via HSV: ");
-  Serial.print("H=" + String(cor.hue) + "°,");
-  Serial.print("S=" + String(cor.saturation) + ", ");
-  Serial.println("V=" + String(cor.value));
-  Serial.print("RGB resultante: ");
-  Serial.print("R=" + String(rgb[0]) + ", ");
-  Serial.print("G=" + String(rgb[1]) + ", ");
-  Serial.println("B=" + String(rgb[2]));
-}
-
-// exibir resultados
-void coresResultantes(CoresReferencia cor, double diferenca) {
-  Serial.println("\nResultado da Identificacao:");
-  Serial.println("Cor identificada: " + String(cor.nome));
-  Serial.print("RGB de referencia: ");
-  Serial.print("R=" + String(cor.rgb[0]) + ", ");
-  Serial.print("G=" + String(cor.rgb[1]) + ", ");
-  Serial.println("B=" + String(cor.rgb[2]));
-  Serial.print("HSV de referencia: ");
-  Serial.print("H=" + String(cor.hue) + "°, ");
-  Serial.print("S=" + String(cor.saturation) + ", ");
-  Serial.println("V=" + String(cor.value));
-  Serial.print("Diferenca quadratica: " + String(diferenca, 2));
-}
-
-void modoCalibrar() {
-  Serial.println("Calibracao");
-  Serial.println("Posicione cada cor sobre o LDR e anote os valores:");
-
-  int i = 0;
-  while (i < 15) {
-    int valorLdr = analogRead(PIN_LDR);
-    byte rgbEstimado[3];
-    rgbEstimadoDeLdr(valorLdr, rgbEstimado);
-
-    Serial.print("LDR: " + String(valorLdr) + " -> RGB_est(");
-    Serial.print(String(rgbEstimado[0]) + ", ");
-    Serial.print(String(rgbEstimado[1]) + ", ");
-    Serial.println(String(rgbEstimado[2]) + ")");
-
-    delay(500);
-    i++;
-
-    if (digitalRead(PIN_BUTTON) == LOW) {
-      delay(500);
-      break;
-    }
-  }
-  Serial.println("Calibracao finalizada!");
-}
-
-void demonstrarHsv() {
-  Serial.println("\nDemonstracao modelo HSV");
-  Serial.println("Percorrendo 360° de Hue com S=1 e V=1");
-
-  for (double h = 0; h < 360; h += 30) {
-    hsvToRgb(h / 360.0, 1.0, 1.0, rgb);
-
-    Serial.print("H=" + String(h) + "° -> ");
-    Serial.print("RGB(" + String(rgb[0]) + ", ");
-    Serial.print(String(rgb[1]) + ", ");
-    Serial.println(String(rgb[2]) + ")");
-
-    analogWrite(PIN_LED_R, rgb[0]);
-    analogWrite(PIN_LED_G, rgb[1]);
-    analogWrite(PIN_LED_B, rgb[2]);
-    delay(200);
-  }
-  analogWrite(PIN_LED_R, 0);
-  analogWrite(PIN_LED_G, 0);
-  analogWrite(PIN_LED_B, 0);
-  Serial.println("Demonstracao concluida! Pronto para identificacao");
-}
-
 void setup() {
   // put your setup code here, to run once:
-  Serial.println("Iniciando...");
-  Serial.println("HSV-RGB Detector de Cores");
   Serial.begin(9600);
+  Serial.println("HSV-RGB Detector de Cores");
   pinMode(PIN_LED_R, OUTPUT);
   pinMode(PIN_LED_G, OUTPUT);
   pinMode(PIN_LED_B, OUTPUT);
@@ -264,39 +99,222 @@ void setup() {
   digitalWrite(PIN_LED_G, LOW);
   digitalWrite(PIN_LED_B, LOW);
   demonstrarHsv();
+  calibrar();
+  calibrado = true;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if (checarBotaoPressionado()) {
+  if (digitalRead(PIN_BUTTON) == LOW) {
+    delay(200);
     identificarCor();
   }
   delay(50);
 }
 
-// distancia euclidiana (medir entre dois pontos em um espaço)
-double diferencaQuadratica(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2) {
+void identificarCor() {
+  Serial.println("Identificando Cor");
+
+  int ldr = lerLDR();
+  Serial.println("LDR: " + String(ldr));
+
+  // Estimar RGB pelo LDR
+  byte rgbEstimado[3];
+  estimarRGB(ldr, rgbEstimado);
+
+  Serial.print("RGB estimado: ");
+  printRGB(rgbEstimado);
+
+  // Encontrar cor mais proxima
+  int melhorCor = encontrarCorMaisProxima(rgbEstimado);
+
+  // Exibe resultado
+  Serial.println("Cor identificada: " + cores[melhorCor].nome);
+  Serial.print("RGB referência: ");
+  printRGB(cores[melhorCor].rgb);
+
+  // Reproduzir cor
+  reproduzirCor(cores[melhorCor]);
+}
+
+int encontrarCorMaisProxima(byte rgbEstimado[3]) {
+  float menorDistancia = 999999;  // Para busca do menor valor
+  int melhorIndex = 0;
+
+  for (int i = 0; i < 7; i++) {
+    float distancia = distanciaEuclidianaRGB(
+      rgbEstimado[0], rgbEstimado[1], rgbEstimado[2],
+      cores[i].rgb[0], cores[i].rgb[1], cores[i].rgb[2]);
+
+    if (distancia < menorDistancia) {
+      menorDistancia = distancia;
+      melhorIndex = i;
+    }
+  }
+  return melhorIndex;
+}
+
+void estimarRGB(int ldr, byte rgbEstimado[3]) {
+  // Busca na tabela de mapeamento LDR
+  int corIndex = -1;
+  for (int i = 0; i < 7; i++) {
+    if (ldr >= ldrRanges[i][0] && ldr <= ldrRanges[i][1]) {
+      corIndex = i;
+      break;
+    }
+  }
+
+  if (corIndex >= 0) {
+    // Usa cor de referência
+    rgbEstimado[0] = cores[corIndex].rgb[0];
+    rgbEstimado[1] = cores[corIndex].rgb[1];
+    rgbEstimado[2] = cores[corIndex].rgb[2];
+  } else {
+    // interpolação linear (intensidade proporcional) baseada no valor LDR
+    // contigência para caso não encontre na tabela
+    float intensidade = (float)ldr / 1023.0;
+    rgbEstimado[0] = intensidade * 255;
+    rgbEstimado[1] = intensidade * 255;
+    rgbEstimado[2] = intensidade * 255;
+  }
+}
+
+void reproduzirCor(Cor cor) {
+  byte rgb[3];
+  hsvToRgb(cor.hue / 360.0, cor.saturation, cor.value, rgb);
+
+  analogWrite(PIN_LED_R, rgb[0]);
+  analogWrite(PIN_LED_G, rgb[1]);
+  analogWrite(PIN_LED_B, rgb[2]);
+
+  Serial.print("HSV configurado: ");
+  Serial.print("H=" + String(cor.hue) + "°,");
+  Serial.print("S=" + String(cor.saturation) + ", ");
+  Serial.println("V=" + String(cor.value));
+  Serial.print("HSV -> RGB: ");
+  printRGB(rgb);
+}
+
+void calibrar() {
+  Serial.println("Posicione cada cor sobre o LDR quando solicitado:");
+
+  for (int i = 0; i < 7; i++) {
+    Serial.println("\nPosicione a cor: " + cores[i].nome);
+    Serial.println("Pressione o botao quando estiver pronto...");
+
+    while (digitalRead(PIN_BUTTON) == HIGH) {
+      int ldr = lerLDR();
+      Serial.println("LDR atual: " + String(ldr));
+      delay(500);
+    }
+
+    delay(200);  // Debounce
+
+    long soma = 0;
+    int leituras = 10;
+    Serial.println("Fazendo leituras...");
+
+    for (int j = 0; j < leituras; j++) {
+      soma += lerLDR();
+      delay(50);
+    }
+
+    int media = soma / leituras;
+
+    // Atualizar o range para a cor (com margem de erro)
+    int margem = 30;
+    ldrRanges[i][0] = max(0, media - margem);
+    ldrRanges[i][1] = min(1023, media + margem);
+
+    Serial.println("Cor " + cores[i].nome + " calibrada!");
+    Serial.println("Valor médio: " + String(media));
+    Serial.println("Range: " + String(ldrRanges[i][0]) + " - " + String(ldrRanges[i][1]));
+
+    // Aguardar soltar o botão
+    while (digitalRead(PIN_BUTTON) == LOW) {
+      delay(50);
+    }
+  }
+  ajustarRanges();
+
+  Serial.println("\nCalibragem concluída");
+  Serial.println("Ranges finais:");
+  for (int i = 0; i < 7; i++) {
+    Serial.println(cores[i].nome + ": " + String(ldrRanges[i][0]) + " - " + String(ldrRanges[i][1]));
+  }
+  Serial.println("Sistema pronto para identificação!\n");
+}
+
+void ajustarRanges() {
+  // Ordenar as cores por valor mínimo do LDR
+  for (int i = 0; i < 6; i++) {
+    for (int j = i + 1; j < 7; j++) {
+      if (ldrRanges[i][0] > ldrRanges[j][0]) {
+        // Trocar ranges
+        int temp[2] = { ldrRanges[i][0], ldrRanges[i][1] };
+        ldrRanges[i][0] = ldrRanges[j][0];
+        ldrRanges[i][1] = ldrRanges[j][1];
+        ldrRanges[j][0] = temp[0];
+        ldrRanges[j][1] = temp[1];
+
+        // Trocar cores correspondentes
+        Cor tempCor = cores[i];
+        cores[i] = cores[j];
+        cores[j] = tempCor;
+      }
+    }
+  }
+
+  // Ajustar sobreposições
+  for (int i = 0; i < 6; i++) {
+    if (ldrRanges[i][1] >= ldrRanges[i + 1][0]) {
+      int meio = (ldrRanges[i][1] + ldrRanges[i + 1][0]) / 2;
+      ldrRanges[i][1] = meio - 1;
+      ldrRanges[i + 1][0] = meio;
+    }
+  }
+}
+
+void demonstrarHsv() {
+  Serial.println("\nDemonstracao modelo HSV - Percorrendo espectro de cores");
+  byte rgb[3];
+  for (double h = 0; h < 360; h += 15) {
+    hsvToRgb(h / 360, 1, 1, rgb);
+    Serial.print("H=" + String(h) + "° -> ");
+    Serial.print("R=" + String(rgb[0]) + " ");
+    Serial.print("G=" + String(rgb[1]) + " ");
+    Serial.print("B=" + String(rgb[2]));
+
+    analogWrite(PIN_LED_R, rgb[0]);
+    analogWrite(PIN_LED_G, rgb[1]);
+    analogWrite(PIN_LED_B, rgb[2]);
+    delay(200);
+  }
+  analogWrite(PIN_LED_R, LOW);
+  analogWrite(PIN_LED_G, LOW);
+  analogWrite(PIN_LED_B, LOW);
+  Serial.println("Demonstracao concluida! Pronto para identificacao");
+}
+
+// Medir entre dois pontos em um espaço
+double distanciaEuclidianaRGB(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2) {
   double difR = r1 - r2;
   double difG = g1 - g2;
   double difB = b1 - b2;
   return sqrt(difR * difR + difG * difG + difB * difB);
 }
 
-void leituraMediaLdr() {
-  const int leituras = 10;
+int lerLDR() {
   long soma = 0;
-
-  for (int i = 0; i < leituras; i++) {
+  for (int i = 0; i < 10; i++) {
     soma += analogRead(PIN_LDR);
     delay(10);
   }
-  return soma / leituras;
+  return soma / 10;
 }
 
-bool checarBotaoPressionado() {
-  if (digitalRead(PIN_BUTTON) == LOW) {
-    delay(200);
-    return true;
-  }
-  return false;
+void printRGB(byte rgb[3]) {
+  Serial.print("R=" + String(rgb[0]) + ", ");
+  Serial.print("G=" + String(rgb[1]) + ", ");
+  Serial.println("B=" + String(rgb[2]));
 }
