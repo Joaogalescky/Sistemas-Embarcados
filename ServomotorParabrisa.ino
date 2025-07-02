@@ -14,35 +14,28 @@ Servo myservo;  // create servo object to control a servo
 const int PIN_SERV = 3;
 const int PIN_B1 = 13;
 const int PIN_B2 = 12;
-
-  int value;  // variable to read the value from the analog pin
+const int pos45 = 45;
+const int pos135 = 135;
 
 void setup() {
   Serial.begin(9600);
+  myservo.attach(PIN_SERV);
   pinMode(PIN_B1, INPUT_PULLUP);
   pinMode(PIN_B2, INPUT_PULLUP);
-  myservo.attach(PIN_SERV);
+  myservo.write(pos45);
 }
 
 void loop() {
   if (digitalRead(PIN_B1) == false) {
-    myservo.write(45);
-    delay(200);
-    myservo.write(90);
-    delay(200);
-  } else {
-    myservo.write(90);
+    myservo.write(pos45);
+    delay(500);
+    myservo.write(pos135);
+    delay(500);
   }
   if (digitalRead(PIN_B2) == false) {
-    myservo.write(135);
-    delay(100);
-    myservo.write(90);
-    delay(100);
+    myservo.write(pos135);
+    delay(1000);
+    myservo.write(pos45);
+    delay(1000);
   }
-  else {
-    myservo.write(90);
-  }
-  value = map(value, 0, 1023, 0, 180);  // scale it for use with the servo (value between 0 and 180)
-  myservo.write(value);                 // sets the servo position according to the scaled value
-  delay(20);                            // waits for the servo to get there
 }
