@@ -27,16 +27,13 @@ static boolean rotating = false;       // debounce management
 boolean A_set = false;
 boolean B_set = false;
 
-int senha[5] = { 4, 3, 8, 9, 1 };
+int senha[4] = { 4, 3, 8, 6};
 const int tamanhoSenha = sizeof(senha) / sizeof(senha[0]);
 int senhaResposta[tamanhoSenha];
 int tentativas = 3;
 int indiceSenha = 0;
 
-const int valorMax = 9;
-const int valorMin = 0;
-
-int tempo = 5;
+int tempo = 2;
 long t;
 
 void setup() {
@@ -75,6 +72,9 @@ void loop() {
     Serial.print("Valor atual:");
     Serial.println(encoderPos, DEC);
     lastReportedPos = encoderPos;
+    if (lastReportedPos == senha[i]){
+
+    }
   }
 
   if (digitalRead(encoderButton) == LOW) {
@@ -140,9 +140,6 @@ void doEncoderA() {
     // adjust counter + if A leads B
     if (A_set && !B_set) {
       encoderPos++;
-      if (encoderPos > valorMax) {
-        encoderPos = valorMin;
-      }
     }
     rotating = false;  // no more debouncing until loop() hits again
   }
@@ -156,9 +153,6 @@ void doEncoderB() {
     //  adjust counter - 1 if B leads A
     if (B_set && !A_set) {
       encoderPos--;
-      if (encoderPos < valorMin) {
-        encoderPos = valorMax;
-      }
     }
   }
   rotating = false;
