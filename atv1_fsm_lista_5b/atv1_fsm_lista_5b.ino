@@ -30,6 +30,10 @@ enum Estado
   S_P2_ABERTO
 };
 
+void printEstado(Estado estado);
+void atualizarSaidas();
+const char *nomeEstado(Estado estado);
+
 Estado estadoAtual = S_PORTAS_TRANCADAS;
 Estado estadoAnterior = S_PORTAS_TRANCADAS; // para detectar mudanças
 
@@ -48,6 +52,8 @@ void setup()
   pinMode(PIN_TRAVA_P2, OUTPUT);
   Serial.begin(9600);
   atualizarSaidas();
+  digitalWrite(PIN_TRAVA_P1, LOW);
+  digitalWrite(PIN_TRAVA_P2, LOW);
 }
 
 void loop()
