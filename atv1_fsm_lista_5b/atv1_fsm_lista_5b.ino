@@ -10,6 +10,8 @@
 // ? E se os 2 botões das portas forem pressionados ao mesmo tempo. O'que fazer ?
 // ? E se cair a energia? Deve travar todas as portas!
 
+// João Vitor Campõe Galescky, João Victor Schmidt Leite & Breno Fernando Soares
+
 // Pinos
 // Botões
 #define PIN_BTN_P1 2
