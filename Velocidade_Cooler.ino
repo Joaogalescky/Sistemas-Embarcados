@@ -29,14 +29,14 @@ void loop() {
   outputValue = map(sensorValue, 0, 1023, 0, 255);  // mapeamento para PWM
   analogWrite(analogOutPin, outputValue);
 
-  unsigned logn currentMillis = millis();
+  unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
 
     noInterrupts();
 
-    rpmValue = count * 60;
+    rpmValue = (count / 2.0) * 60;
 
     Serial.print("RPM: ");
     Serial.println(rpmValue);
