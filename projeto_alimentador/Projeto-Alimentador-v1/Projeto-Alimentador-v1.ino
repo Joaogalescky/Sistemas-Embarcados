@@ -59,176 +59,100 @@ bool removeChatId(String chatId) {
     if (validChatIds[i] == chatId) {
       // Mover proximos elementos para a posição
       for (int j = i; j < numValidChats - 1; j++) {
-        validChatIds[j] = validChatIds
+        validChatIds[j] = validChatIds[j + 1];
       }
+      validChatIds[numValidChats - 1] = "";
+      numValidChats--;
+      return true;
     }
   }
+  return false;
 }
 
-void initWIFI() {
-  Serial.print("Connecting to Wifi SSID ");
-  Serial.print(WIFI_SSID);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);  // Add root certificate for api.telegram.org
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(500);
-  }
-  Serial.print("\nWiFi connected. IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
-}
-
-// rotina de verificação e tratamento das mensagens
-void loopTelegram() {
-  // a variable to store telegram message data
-  TBMessage msg;
-
-  // if there is an incoming message...
-  if (myBot.getNewMessage(msg)) {
-    long telegramDelay = millis();
-    // check what kind of message I received
-    if (msg.messageType == CTBotMessageText) {
-      Serial.print("\nMensagem: ");
-      Serial.println(msg.text);
-      Serial.println();
-
-      // received a text message
-      if (msg.text.equalsIgnoreCase("show keyboard")) {
-        // the user is asking to show the reply keyboard --> show it
-        myBot.sendMessage(msg.sender.id, "Reply Keyboard enable. You can send a simple text, your contact, your location or hide the keyboard", myKbd);
-        isKeyboardActive = true;
-      } else if (msg.text.equalsIgnoreCase("Add Id")) {
-        bool result = idsList.isListed(msg.sender.id);
-        if (result) {
-          myBot.sendMessage(msg.sender.id, "ID já foi adicionado!");
-        } else {
-          bool result = idsList.addId(msg.sender.id);
-          if (result) {
-            myBot.sendMessage(msg.sender.id, "ID adicionado!");
-          } else {
-            myBot.sendMessage(msg.sender.id, "Não foi possível adicionar!");
-          }
-        }
-      } else if (msg.text.equalsIgnoreCase("Remove Id")) {
-        bool result = idsList.isListed(msg.sender.id);
-        if (result) {
-          bool result = idsList.removeId(msg.sender.id);
-          if (result) {
-            myBot.sendMessage(msg.sender.id, "ID removido!");
-          } else {
-            myBot.sendMessage(msg.sender.id, "Não foi possível remover!");
-          }
-        } else {
-          myBot.sendMessage(msg.sender.id, "ID não listado!");
-        }
-      } else if (msg.text.equalsIgnoreCase("Info!")) {
-        myBot.sendMessage(msg.sender.id, temp);
-      }
-
-
-      // check if the reply keyboard is active
-      else if (isKeyboardActive) {
-        // is active -> manage the text messages sent by pressing the reply keyboard buttons
-        if (msg.text.equalsIgnoreCase("Hide replyKeyboard")) {
-          // sent the "hide keyboard" message --> hide the reply keyboard
-          myBot.removeReplyKeyboard(msg.sender.id, "Reply keyboard removed");
-          isKeyboardActive = false;
-        } else {
-          // print every others messages received
-          myBot.sendMessage(msg.sender.id, msg.text);
-        }
-      } else {
-        // the user write anything else and the reply keyboard is not active --> show a hint message
-        myBot.sendMessage(msg.sender.id, "Try 'show keyboard'");
-        Serial.print("Id:");
-        Serial.println(msg.sender.id);
-      }
+void sendNotification(String message) {
+    for (int i = 0; i < numValidChats; i++) {
+        bot.sendMessage(validChatIds[i], message, "");
     }
-    Serial.print("Telegram delay: ");
-    Serial.println(millis() - telegramDelay);
-  }
 }
 
-void createKeyboards() {
-  myKbd.addButton("Info!");
-  myKbd.addRow();
-  myKbd.addButton("Add Id");
-  myKbd.addButton("Remove Id");
-  myKbd.addRow();
-  myKbd.addButton("Hide replyKeyboard");
-  myKbd.enableResize();
-}
+void handleNewMessage(int numMessages) {
+Serial.print("Total de novas mensagens: ");
+  Serial.println(numNewMessages);
 
-// task que será alocada no core 0
-void taskTelegram(void* pvParameters) {
-  delay(10);
-  Serial.print("TaskTelegram running on core ");
-  Serial.println(xPortGetCoreID());
-
-  // Telgram bot
-  myBot.wifiConnect(WIFI_SSID, WIFI_PASSWORD);
-  myBot.setTelegramToken(BOT_TOKEN);
-
-  // check if all things are ok
-  if (myBot.testConnection()) {
-    Serial.println("\ntestConnection OK");
-  } else {
-    Serial.println("\ntestConnection NOK");
-  }
-  // Create keyboards
-  createKeyboards();
-  isKeyboardActive = false;
-
-  for (;;) {
-    loopTelegram();
-    vTaskDelay(1200 / portTICK_PERIOD_MS);
-  }
-}
-
-void handleNewMessages(int numNewMessages) {
   for (int i = 0; i < numNewMessages; i++) {
     // Inline buttons with callbacks when pressed will raise a callback_query message
     if (bot.messages[i].type == "callback_query") {
-      Serial.print("Call back button pressed by: ");
+      Serial.print("Callback button pressed by: ");
       Serial.println(bot.messages[i].from_id);
-      Serial.print("Data on the button: ");
+      Serial.print("Data: ");
       Serial.println(bot.messages[i].text);
-      bot.sendMessage(bot.messages[i].from_id, bot.messages[i].text, "");
+      bot.sendMessage(bot.messages[i].from_id, "Você pressionou: " + bot.messages[i].text, "");
     } else {
       String chat_id = bot.messages[i].chat_id;
       String text = bot.messages[i].text;
-
       String from_name = bot.messages[i].from_name;
-      if (from_name == "")
-        from_name = "Guest";
+      if (from_name == "") from_name = "Guest";
 
-      if (text == "/options") {
-        String keyboardJson = "[[{ \"text\" : \"Go to Google\", \"url\" : \"https://www.google.com\" }],[{ \"text\" : \"Send\", \"callback_data\" : \"This was sent by inline\" }]]";
-        bot.sendMessageWithInlineKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson);
+      Serial.print("Mensagem recebida de ");
+      Serial.print(from_name);
+      Serial.print(" (ID: ");
+      Serial.print(chat_id);
+      Serial.print("): ");
+      Serial.println(text);
+
+      if (text.equalsIgnoreCase("/addid")) {
+        if (addChatId(chat_id)) {
+          bot.sendMessage(chat_id, "SUCESSO: ID adicionado para notificações!", "");
+        } else if (isChatIdValid(chat_id)) {
+          bot.sendMessage(chat_id, "ATENÇÃO! ID já está na lista.", "");
+        } else {
+          bot.sendMessage(chat_id, "ERRO: Não foi possível adicionar o ID. Lista cheia.", "");
+        }
+      } else if (text.equalsIgnoreCase("/removeid")) {
+        if (removeChatId(chat_id)) {
+          bot.sendMessage(chat_id, "SUCESSO: ID removido da lista de notificações.", "");
+        } else {
+          bot.sendMessage(chat_id, "ATENÇÃO! Seu ID não está na lista para ser removido.", "");
+        }
       }
 
-      if (text == "/start") {
-        String welcome = "Welcome to Universal Arduino Telegram Bot library, " + from_name + ".\n";
-        welcome += "This is Inline Keyboard Markup example.\n\n";
-        welcome += "/options : returns the inline keyboard\n";
+      else if (text.equalsIgnoreCase("/info")) {
+        String infoMsg = "--- Status do Feeder ---\n";
+        infoMsg += "Leitura do Sensor (0-1023): " + String(sensorValue) + "\n";
+        infoMsg += "Nível Mapeado (0-2000): " + String(outputValue) + "\n";
+        infoMsg += "IDs Registrados: " + String(numValidChats) + "/" + String(MAX_CHATS) + "\n";
+        bot.sendMessage(chat_id, infoMsg, "");
+      }
+
+      else if (text == "/start") {
+        String welcome = "Bem-vindo ao FeederBot, " + from_name + ".\n\n";
+        welcome += "Use os comandos:\n";
+        welcome += "/addid - Receber notificações do status.\n";
+        welcome += "/removeid - Parar de receber notificações.\n";
+        welcome += "/info - Ver o status atual do alimentador.\n";
+        welcome += "/options - Exibir teclado inline de exemplo.\n";
 
         bot.sendMessage(chat_id, welcome, "Markdown");
+      } else if (text == "/options") {
+        String keyboardJson = "[[{ \"text\" : \"Google\", \"url\" : \"https://www.google.com\" }],[{ \"text\" : \"Callback Teste\", \"callback_data\" : \"inline_data_exemplo\" }]]";
+        bot.sendMessageWithInlineKeyboard(chat_id, "Escolha uma opção:", "", keyboardJson);
       }
     }
   }
 }
 
-void setup() {
-  Serial.begin(115200);
-  setupFeeder();
-  setupTelegram();
-  initWIFI();
-}
+void telegramLoop() {
+  if (millis() - bot_lasttime > BOT_MTBS) {
+    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
-void loop() {
-  feederEsp32();
-  telegramLoop();
+    while (numNewMessages) {
+      Serial.println("got response");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
+
+    bot_lasttime = millis();
+  }
 }
 
 void setupFeeder() {
@@ -239,7 +163,38 @@ void setupFeeder() {
   digitalWrite(PIN_LED_G, LOW);
   digitalWrite(PIN_LED_B, LOW);
   dis.begin(0x70);
+  dis.setBrightness(0);
   Serial.println();
+}
+
+void feederEsp32() {
+  unsigned long currentTime = millis();
+
+  sensorValue = analogRead(PIN_POT);
+  outputValue = map(sensorValue, 0, 1023, 0, 2000);
+  analogWrite(sensorValue, outputValue);
+
+  if (currentTime - previousTime >= interval) {
+    previousTime = currentTime;
+
+    if (outputValue > 1000) {
+      digitalWrite(PIN_LED_R, LOW);
+      digitalWrite(PIN_LED_G, HIGH);
+      digitalWrite(PIN_LED_B, LOW);
+    } else if (outputValue > 500) {
+      digitalWrite(PIN_LED_R, HIGH);
+      digitalWrite(PIN_LED_G, HIGH);
+      digitalWrite(PIN_LED_B, LOW);
+    } else {
+      digitalWrite(PIN_LED_R, HIGH);
+      digitalWrite(PIN_LED_G, LOW);
+      digitalWrite(PIN_LED_B, LOW);
+      sendNotification("ATENÇÃO! Nível do alimentador baixo: ", String(outputValue));
+    }
+
+    dis.println((int)outputValue);
+    dis.writeDisplay();
+  }
 }
 
 void setupTelegram() {
@@ -269,45 +224,51 @@ void setupTelegram() {
   bot.sendMessage(CHAT_ID, "Bot started up", "");
 }
 
-void telegramLoop() {
-  if (millis() - bot_lasttime > BOT_MTBS) {
-    int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+void initWIFI() {
+  Serial.print("Connecting to Wifi SSID ");
+  Serial.print(WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  secured_client.setCACert(TELEGRAM_CERTIFICATE_ROOT);  // Add root certificate for api.telegram.org
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.print("\nWiFi connected. IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+}
 
-    while (numNewMessages) {
-      Serial.println("got response");
-      handleNewMessages(numNewMessages);
-      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-    }
-
-    bot_lasttime = millis();
+// task que será alocada no core 0
+void taskTelegram(void* pvParameters) {
+  delay(10);
+  Serial.print("TaskTelegram running on core ");
+  Serial.println(xPortGetCoreID());
+  // Telgram bot
+  myBot.wifiConnect(WIFI_SSID, WIFI_PASSWORD);
+  myBot.setTelegramToken(BOT_TOKEN);
+  // check if all things are ok
+  if (myBot.testConnection()) {
+    Serial.println("\ntestConnection OK");
+  } else {
+    Serial.println("\ntestConnection NOK");
+  }
+  // Create keyboards
+  createKeyboards();
+  isKeyboardActive = false;
+  for (;;) {
+    loopTelegram();
+    vTaskDelay(1200 / portTICK_PERIOD_MS);
   }
 }
 
-void feederEsp32() {
-  unsigned long currentTime = millis();
+void setup() {
+  Serial.begin(115200);
+  setupFeeder();
+  setupTelegram();
+  initWIFI();
+}
 
-  sensorValue = analogRead(PIN_POT);
-  outputValue = map(sensorValue, 0, 1023, 0, 2000);
-  analogWrite(sensorValue, outputValue);
-
-  if (currentTime - previousTime >= interval) {
-    previousTime = currentTime;
-
-    if (outputValue > 1000) {
-      digitalWrite(PIN_LED_R, LOW);
-      digitalWrite(PIN_LED_G, HIGH);
-      digitalWrite(PIN_LED_B, LOW);
-    } else if (outputValue > 500) {
-      digitalWrite(PIN_LED_R, HIGH);
-      digitalWrite(PIN_LED_G, HIGH);
-      digitalWrite(PIN_LED_B, LOW);
-    } else {
-      digitalWrite(PIN_LED_R, HIGH);
-      digitalWrite(PIN_LED_G, LOW);
-      digitalWrite(PIN_LED_B, LOW);
-    }
-
-    dis.println(outputValue);
-    dis.writeDisplay();
-  }
+void loop() {
+  feederEsp32();
+  telegramLoop();
 }
